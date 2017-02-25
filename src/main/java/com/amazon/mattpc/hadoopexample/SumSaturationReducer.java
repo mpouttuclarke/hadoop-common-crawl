@@ -1,13 +1,10 @@
-package com.amazon.hackarizona2017.hadoop;
+package com.amazon.mattpc.hadoopexample;
 
-import com.google.common.hash.BloomFilter;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.roaringbitmap.buffer.MutableRoaringBitmap;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 
 /**
  * Aggregates the sum and saturation per domain.
@@ -17,7 +14,7 @@ public class SumSaturationReducer
     public static final String DELIM = "\t";
     private Text resultKey = new Text();
     private TermBitmapCountWritable resultValue = new TermBitmapCountWritable();
-    private final TermPatterns termPatterns = new TermPatterns();
+    private final TermUtils termPatterns = new TermUtils();
 
     @Override
     protected void setup(Reducer.Context context) throws IOException, InterruptedException {
@@ -29,20 +26,20 @@ public class SumSaturationReducer
     public void reduce(Text key, Iterable<TermBitmapCountWritable> values,
                        Context context) throws IOException, InterruptedException {
         long sum = 0;
-        BloomFilter<String> bloomAgg = null;
+        MutableRoaringBitmap roarAgg = null;
         for (TermBitmapCountWritable val : values) {
             sum += val.count.get();
-            BloomFilter<String> bloomIn =
-                    BloomFilter.readFrom(new ByteArrayInputStream(val.bitmap.getBytes()), TermPatterns.TERM_FUNNEL);
-            if(bloomAgg == null) {
-                bloomAgg = bloomIn;
+            final MutableRoaringBitmap roarIn = MutableRoaringBitmap.bitmapOf();
+            roarIn.deserialize(new DataInputStream(new ByteArrayInputStream(val.bitmap.getBytes())));
+            if(roarAgg == null) {
+                roarAgg = roarIn;
             } else {
-                bloomAgg.putAll(bloomIn);
+                roarAgg.or(roarIn);
             }
         }
-        resultKey.set(key + DELIM + termPatterns.estimateMatchCount(bloomAgg));
+        resultKey.set(key + DELIM + roarAgg.getCardinality());
         resultValue.count.set(sum);
-        final byte[] bytesForBloom = termPatterns.getBytesForBloom(bloomAgg);
+        final byte[] bytesForBloom = TermUtils.getBytes(roarAgg);
         resultValue.bitmap.set(bytesForBloom, 0, bytesForBloom.length);
         context.write(resultKey, resultValue);
     }

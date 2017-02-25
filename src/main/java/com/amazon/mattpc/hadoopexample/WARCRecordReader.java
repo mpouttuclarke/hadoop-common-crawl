@@ -1,4 +1,4 @@
-package com.amazon.hackarizona2017.hadoop;
+package com.amazon.mattpc.hadoopexample;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;

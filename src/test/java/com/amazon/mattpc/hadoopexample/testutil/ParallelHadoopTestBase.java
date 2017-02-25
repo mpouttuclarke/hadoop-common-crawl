@@ -1,4 +1,4 @@
-package com.amazon.hackarizona2017.hadoop.testutil;
+package com.amazon.mattpc.hadoopexample.testutil;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;

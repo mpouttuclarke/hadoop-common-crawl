@@ -1,23 +1,22 @@
-package com.amazon.hackarizona2017.hadoop;
+package com.amazon.mattpc.hadoopexample;
 
 import com.google.common.hash.BloomFilter;
 import com.google.re2j.Pattern;
-import javafx.scene.effect.Bloom;
 import org.apache.commons.lang.StringUtils;
+import org.roaringbitmap.buffer.MutableRoaringBitmap;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Creates a matching pattern for terms and also maps a term to a termId and estimates bloom filter matches.
  */
-public class TermPatterns {
+public class TermUtils {
 
-    public static final TermFunnel TERM_FUNNEL = new TermFunnel();
     private final List<String> terms = new ArrayList<>(1024);
 
     public Pattern initFromReader(BufferedReader reader) throws IOException {
@@ -35,10 +34,6 @@ public class TermPatterns {
         return Pattern.compile(builder.toString(), Pattern.CASE_INSENSITIVE);
     }
 
-    public BloomFilter<String> newBloomForTerms() {
-        return BloomFilter.create(TERM_FUNNEL, terms.size(), 0.001);
-    }
-
     /**
      * Gets a term using an id starting with 1.
      * @param termId
@@ -49,30 +44,16 @@ public class TermPatterns {
     }
 
     /**
-     * Estimates the count of term matches.
-     * @param bloom
-     * @return
-     */
-    public int estimateMatchCount(BloomFilter<String> bloom) {
-        int total = 0;
-        for(String term : terms) {
-            if (bloom.mightContain(term)) {
-                total++;
-            }
-        }
-        return total;
-    }
-
-    /**
-     * Gets the raw bytes for a bloom filter.
-     * @param bloom
+     * Extracts the bytes in the roaring bitmap.
+     * @param roar
      * @return
      * @throws IOException
      */
-    public byte[] getBytesForBloom(BloomFilter<String> bloom) throws IOException {
-        final ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream(1024);
-        bloom.writeTo(arrayOutputStream);
-        arrayOutputStream.close();
-        return arrayOutputStream.toByteArray();
+    public static byte[] getBytes(MutableRoaringBitmap roar) throws IOException {
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DataOutputStream out = new DataOutputStream(bao);
+        roar.serialize(out);
+        out.close();
+        return bao.toByteArray();
     }
 }

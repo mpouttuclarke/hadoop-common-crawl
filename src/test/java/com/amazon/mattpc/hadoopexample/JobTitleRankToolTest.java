@@ -1,6 +1,6 @@
-package com.amazon.hackarizona2017.hadoop;
+package com.amazon.mattpc.hadoopexample;
 
-import com.amazon.hackarizona2017.hadoop.testutil.ParallelHadoopTestBase;
+import com.amazon.mattpc.hadoopexample.testutil.ParallelHadoopTestBase;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.Test;

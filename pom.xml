@@ -33,11 +33,6 @@
             <version>1.1.2</version>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>20.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.re2j</groupId>
             <artifactId>re2j</artifactId>
             <version>1.1</version>
@@ -71,7 +66,7 @@
                     </descriptors>
                     <archive>
                         <manifest>
-                            <mainClass>com.amazon.hackarizona2017.hadoop.JobTitleRankMain</mainClass>
+                            <mainClass>com.amazon.mattpc.hadoopexample.JobTitleRankMain</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

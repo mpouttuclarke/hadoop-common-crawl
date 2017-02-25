@@ -1,6 +1,5 @@
-package com.amazon.hackarizona2017.hadoop;
+package com.amazon.mattpc.hadoopexample;
 
-import com.google.common.hash.BloomFilter;
 import com.google.re2j.Matcher;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -9,10 +8,9 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.log4j.Logger;
 import org.archive.io.ArchiveReader;
 import org.archive.io.ArchiveRecord;
+import org.roaringbitmap.buffer.MutableRoaringBitmap;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
 
 /**
@@ -34,7 +32,7 @@ class SumSaturationMapper extends Mapper<Text, ArchiveReader, Text, TermBitmapCo
 
     private final Text outKey = new Text();
     private final TermBitmapCountWritable outVal = new TermBitmapCountWritable();
-    private final TermPatterns termPatterns = new TermPatterns();
+    private final TermUtils termPatterns = new TermUtils();
     private Matcher matcher;
 
     @Override
@@ -50,7 +48,7 @@ class SumSaturationMapper extends Mapper<Text, ArchiveReader, Text, TermBitmapCo
             try {
                 if (r.getHeader().getMimetype().equals("text/plain")) {
                     int sum = 0;
-                    BloomFilter<String> bloom = termPatterns.newBloomForTerms();
+                    MutableRoaringBitmap roar = MutableRoaringBitmap.bitmapOf();
                     // We need this counter because Map Reduce only sees one input record (normally one per line)
                     context.getCounter(MapperCounter.RECORDS_IN).increment(1);
                     if (LOG.isDebugEnabled()) {
@@ -71,7 +69,7 @@ class SumSaturationMapper extends Mapper<Text, ArchiveReader, Text, TermBitmapCo
                             // Get the term group that matched (if any)
                             for (int group = 1; group < matcher.groupCount(); group++) {
                                 if(matcher.group(group) != null) {
-                                    bloom.put(termPatterns.getTermById(group));
+                                    roar.add(group);
                                     termFound = true;
                                     sum++;
                                     break;
@@ -83,7 +81,8 @@ class SumSaturationMapper extends Mapper<Text, ArchiveReader, Text, TermBitmapCo
                         }
                     }
                     outVal.count.set(sum);
-                    final byte[] bytes = termPatterns.getBytesForBloom(bloom);
+                    roar.runOptimize();
+                    final byte[] bytes = TermUtils.getBytes(roar);
                     outVal.bitmap.set(bytes, 0, bytes.length);
                     context.write(outKey, outVal);
                 } else {

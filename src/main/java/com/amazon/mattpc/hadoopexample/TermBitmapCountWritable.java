@@ -1,4 +1,4 @@
-package com.amazon.hackarizona2017.hadoop;
+package com.amazon.mattpc.hadoopexample;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.io.BytesWritable;
